@@ -88,7 +88,7 @@ bandera3: DS 1
 bandera4: DS 1
 bandera5: DS 1
 bandera6: DS 1
-display:  DS 2 
+display:  DS 6 
 bandera_edit1: DS 1
 bandera_reloj: DS 1
 
@@ -98,9 +98,9 @@ u_mes:	  DS 1
 d_mes:    DS 1
 mes:	  DS 1  
 dias_limite: DS 1
-bandera: DS 1
-estado:	DS 1
-    
+EDITAR: DS 1
+ESTADO:	DS 1
+LED:    DS 1    
     
     
 PSECT resVect, class=CODE, abs, delta=2
@@ -127,8 +127,8 @@ ISR:
     BTFSC   T0IF	    ; Interrupcion de TMR0
     CALL    INT_TMR0   
    		
-   ;BTFSC   RBIF	
-   ;CALL    INT_PORTB
+   BTFSC   RBIF	
+   CALL    INT_PORTB
     
     BTFSC   TMR1IF
     CALL    INT_TMR1
@@ -136,11 +136,11 @@ ISR:
     BTFSC   TMR2IF
     CALL    INT_TMR2
     
-    BTFSC   estado,0
+    /*BTFSC   estado,0
     CALL    EDITAR
     CALL    MODO_NORMAL
     
-    MODO_NORMAL:
+   /* MODO_NORMAL:
     BTFSC   RBIF	    ;verifio mi bandera 
     GOTO    $+2		    ; si se presiona voy a verficar el boton
     GOTO    $+3
@@ -161,7 +161,7 @@ ISR:
     ;CALL    EDITAR_TIMER
     CALL    SETEAR_ESTADO2
     BCF	    RBIF
-    GOTO    POP
+    GOTO    POP*/
     
 POP:
     SWAPF   STATUS_TEMP, W  
@@ -170,7 +170,7 @@ POP:
     SWAPF   W_TEMP, W		
     RETFIE
     
-    SETEAR_ESTADO1:	;en mi loop principal verifico el boton 
+   /* SETEAR_ESTADO1:	;en mi loop principal verifico el boton 
  BTFSS	PORTB, 1	; si se presiona voy a ncender estado
  RETURN
  BSF	estado, 0
@@ -179,11 +179,142 @@ POP:
  BTFSS	PORTB, 1
  RETURN
  BCF	estado, 0
+ RETURN*/
+    
+ INT_PORTB:
+ BTFSC	PORTB, 0
+ CALL	CAMBIO_ESTADO
+ BTFSC	PORTB, 1
+ CALL	CAMBIO_ESTADO_EDIT
+ BTFSC	PORTB, 2
+ CALL	INCREMENTAR
+ BTFSC	PORTB, 3
+ CALL	DECREMENTAR
+ BSF	RBIF	
  RETURN
+ 
+ 
+ 
+ 
+CAMBIO_ESTADO:
+    INCF    ESTADO, F
+    MOVF    ESTADO, W
+    SUBLW   4
+    BTFSS   STATUS, 2
+    RETURN
+    BSF	    ESTADO, 0
+    RETURN
     
- INT_PORTB_00:
-    
+CAMBIO_ESTADO_EDIT:
+    INCF    EDITAR, F  
+    MOVF    EDITAR, W
+    SUBLW   4
+    BTFSS   STATUS, 2
+    RETURN
+    BSF	    ESTADO, 0
+    RETURN
 
+INCREMENTAR:
+    MOVF    ESTADO, W
+    SUBLW   1
+    BTFSC   STATUS, 2
+    CALL    INCREMENTAR_RELOJ
+    MOVF    ESTADO, W
+    SUBLW   2
+    BTFSC   STATUS, 2
+    CALL    INCREMENTAR_FECHA
+    MOVF    ESTADO, W
+    SUBLW   3
+    BTFSC   STATUS, 2
+    CALL    INCREMENTAR_TIMER
+    RETURN
+ 
+DECREMENTAR:
+    MOVF    ESTADO, W
+    SUBLW   1
+    BTFSC   STATUS, 2
+    CALL    DECREMENTAR_RELOJ
+    MOVF    ESTADO, W
+    SUBLW   2
+    BTFSC   STATUS, 2
+    CALL    DECREMENTAR_FECHA
+    MOVF    ESTADO, W
+    SUBLW   3
+    BTFSC   STATUS, 2
+    CALL    DECREMENTAR_TIMER
+    RETURN   
+    
+  INCREMENTAR_RELOJ:
+    MOVF    EDITAR, W
+    SUBLW   2
+    BTFSC   STATUS, 2
+    CALL    INCREMENTAR_HORAS
+    MOVF    ESTADO, W
+    SUBLW   3
+    BTFSC   STATUS, 2
+    CALL    INCREMENTAR_MINUTOS
+    RETURN
+    
+  INCREMENTAR_FECHA:
+    
+    RETURN
+    
+  INCREMENTAR_TIMER:
+    
+    RETURN
+    
+  DECREMENTAR_RELOJ:
+    
+    RETURN
+    
+  DECREMENTAR_FECHA:
+    
+    RETURN
+    
+  DECREMENTAR_TIMER:
+    
+    RETURN
+    
+    
+  ;------INCREMENTOS--------------
+  
+  INCREMENTAR_HORAS:
+    
+    /*INCF    u_horas
+    INCF    horas_24
+    MOVF    u_horas, W
+    SUBLW   10
+    BTFSS   STATUS, 2
+    RETURN
+    CLRF    u_horas
+    INCF    d_horas
+    MOVF    horas_24, W
+    SUBLW   24
+    BTFSS   STATUS, 2	
+    RETURN 
+    CLRF    d_horas
+    CLRF    u_horas
+    CLRF    horas_24*/
+    RETURN
+    
+ INCREMENTAR_MINUTOS:
+    
+    /*INCF    u_minutos
+    MOVF    u_minutos, W
+    SUBLW   10
+    BTFSS   STATUS, 2
+    RETURN
+    CLRF    u_minutos
+    INCF    d_minutos
+    MOVF    d_minutos, W
+    SUBLW   6
+    BTFSS   STATUS, 2
+    RETURN 
+    CLRF    d_minutos*/
+    RETURN  
+    
+    
+/*
     BTFSS   PORTD, 0		; Verificamos en que estado estamos 
     GOTO    $+2
     GOTO    ESTADO_0
@@ -249,7 +380,7 @@ POP:
 	BCF	RBIF
     RETURN*/
 
-   EDITAR_RELOJ:
+   /*EDITAR_RELOJ:
     BTFSC   PORTB, 2
     CALL    incremento_horas
     BTFSC   PORTB, 3
@@ -274,7 +405,7 @@ POP:
     CLRF    d_horas
     CLRF    u_horas
     CLRF    horas_24
-    RETURN*/
+    RETURN
     
     
     incremento_minutos:
@@ -309,20 +440,20 @@ POP:
    BSF	    bandera, 0
    BTFSC    PORTB, 3
    CALL	    incremento_minutos
-   RETURN */
+   RETURN 
     
    EDITAR_FECHA:
     RETURN
     
     EDITAR_TIMER:
-    RETURN
+    RETURN*/
     
     
   
 INT_TMR0:		 ;interrumpcion de timer 0
 RESET_TMR0 240		 ;regreso  el valor para no iniciar de 0 a 240
-INCF	bandera, F    
-CALL	MOSTRAR_VALOR   
+INCF	LED, F    
+;CALL	MOSTRAR_VALOR   
 RETURN
     
     
@@ -336,7 +467,7 @@ INT_TMR1:
   INT_TMR2:
     
     
-     BCF	    TMR2IF
+    /* BCF	    TMR2IF
      		                 ;
      BTFSC	    bandera, 0	    ; verificamos la vandera 
      goto	    apagar
@@ -349,17 +480,17 @@ INT_TMR1:
     
     apagar: 
     BCF		    PORTD, 5
-    BCF		    bandera,0
+    BCF		    bandera,0*/
     RETURN
     
  ;--------subrutinas-------------------------------	
  
  LEDS:
-    MOVF     bandera, W
+    MOVF     LED, W
     SUBLW   250
     BTFSS   STATUS, 2
     RETURN
-    CLRF    bandera
+    CLRF    LED
     INCF    PORTE
   RETURN
  ;conteo_reloj:
@@ -422,7 +553,71 @@ RETURN
     ;INCF    u_dias
     ;INCF    dias_limite
     RETURN
+    
+MOSTRAR_ESTADO:
+    
+    MOVF    ESTADO, W
+    SUBLW   1
+    BTFSC   STATUS, 2
+    GOTO    ENCENDER_LED1	        
+    MOVF    ESTADO, W
+    SUBLW   2
+    BTFSC   STATUS, 2
+    GOTO    ENCENDER_LED2
+    MOVF    ESTADO, W
+    SUBLW   3
+    BTFSC   STATUS, 2
+    GOTO   ENCENDER_LED3
+    RETURN   
+    
+    ENCENDER_LED1:
+    BSF	    PORTD, 0
+    BCF	    PORTD, 1
+    BCF	    PORTD, 2
+    
+    RETURN
+    
+    ENCENDER_LED2: 
+    
+    BCF	    PORTD, 0
+    BSF	    PORTD, 1
+    BCF	    PORTD, 2
+    
+    RETURN
+    
+    ENCENDER_LED3:
+    BCF	    PORTD, 1
+    BSF	    PORTD, 2
+    BCF	    PORTD, 0
+    RETURN
  
+MOSTRAR_EDITAR:
+    
+    	        
+    MOVF    EDITAR, W
+    SUBLW   2
+    BTFSC   STATUS, 2
+    GOTO    ENCENDER_LED5
+    MOVF    EDITAR, W
+    SUBLW   3
+    BTFSC   STATUS, 2
+    GOTO   ENCENDER_LED6
+    RETURN   
+    
+    ENCENDER_LED5: 
+    BSF	    PORTD, 3
+    BCF	    PORTD, 4
+   
+    RETURN
+    
+    ENCENDER_LED6:
+    BCF	    PORTD, 3
+    BSF	    PORTD, 4
+    
+    RETURN
+    
+    
+    
  /*FECHA:				    ;macro para mi fecha
     ;--------enero-----------------
      
@@ -606,15 +801,19 @@ ANTIREBOTES:
   
 SET_DISPLAYS:
     
-  BTFSS	    PORTD, 0
-  GOTO	    $+2
-  GOTO	    mostrar_hora
-  BTFSS	    PORTD, 1
-  GOTO	    $+2
-  GOTO	    mostrar_fecha
-  BTFSS	    PORTD, 2
-  GOTO	    $+2
-  GOTO	    mostrar_temporizador
+    MOVF    ESTADO, W
+    SUBLW   1
+    BTFSC   STATUS, 2
+    CALL    mostrar_hora	        
+    MOVF    ESTADO, W
+    SUBLW   2
+    BTFSC   STATUS, 2
+    CALL    mostrar_fecha
+    MOVF    ESTADO, W
+    SUBLW   3
+    BTFSC   STATUS, 2
+    CALL    mostrar_temporizador   
+    RETURN
     mostrar_hora:
     
     MOVF    u_segundos, W		; Movemos unidad  a W
@@ -654,7 +853,7 @@ SET_DISPLAYS:
     
     RETURN
     
-MOSTRAR_VALOR:
+/*MOSTRAR_VALOR:
     
     BSF	    PORTA, 0		; Apagamos display de unudad
     BSF	    PORTA, 1		; Apagamos display de decena
@@ -662,26 +861,26 @@ MOSTRAR_VALOR:
     BSF	    PORTA, 3
     BSF	    PORTA, 4
     BSF	    PORTA, 5 
-    BTFSS   bandera1, 0		; Verificamos bandera4
-    GOTO    $+2
-    GOTO    DISPLAY_0
-    BTFSS   bandera2, 0		; Verificamos bandera4
-    GOTO    $+2
-    GOTO    DISPLAY_1
-    BTFSS   bandera3, 0		; Verificamos bandera4
-    GOTO    $+2
+    ;BTFSC   bandera1, 0		; Verificamos bandera4
+    ;GOTO    $+2
+    ;GOTO    DISPLAY_0
+    ;BTFSC   bandera2, 0		; Verificamos bandera4
+    ;GOTO    $+2
+    ;GOTO    DISPLAY_1
+    BTFSC   bandera3, 0		; Verificamos bandera4
+    ;GOTO    $+2
     GOTO    DISPLAY_2
-    BTFSS   bandera4, 0		; Verificamos bandera4
-    GOTO    $+2
+    BTFSC   bandera4, 0		; Verificamos bandera4
+    ;GOTO    $+2
     GOTO    DISPLAY_3
-    BTFSS   bandera5, 0		; Verificamos bandera4
-    GOTO    $+2
+    BTFSC   bandera5, 0		; Verificamos bandera4
+    ;GOTO    $+2
     GOTO    DISPLAY_4
-    BTFSS   bandera6, 0		; Verificamos bandera4
-    GOTO    $+2
+    BTFSC   bandera6, 0		; Verificamos bandera4
+    ;GOTO    $+2
     GOTO    DISPLAY_5
-   
-    DISPLAY_0:			
+  
+    /*DISPLAY_0:			
 	MOVF    display, W	; Movemos display a W
 	MOVWF	    PORTC		; Movemos Valor de tabla a PORTC
 	BCF	    PORTA, 0		; encendemos el display a mostrar	
@@ -703,7 +902,7 @@ MOSTRAR_VALOR:
 	BCF	    PORTA, 2
 	BSF	bandera4, 0	; Cambiamos bandera para cambiar el otro display en la siguiente interrupción
 	BCF	bandera3, 0	; apagamos bandera actual
-    RETURN
+        RETURN
 
     DISPLAY_3:
 	MOVF    display+3, W	; Movemos display a W
@@ -711,7 +910,7 @@ MOSTRAR_VALOR:
 	BCF	    PORTA, 3
 	BSF	bandera5, 0	; Cambiamos bandera para cambiar el otro display en la siguiente interrupción
 	BCF	bandera4, 0	; apagamos bandera actual
-    RETURN	
+        RETURN	
 	
     DISPLAY_4:			
 	MOVF    display+4, W	; Movemos display a W
@@ -719,44 +918,20 @@ MOSTRAR_VALOR:
 	BCF	    PORTA, 4
 	BSF	bandera6, 0	; Cambiamos bandera para cambiar el otro display en la siguiente interrupción
 	BCF	bandera5, 0	; apagamos bandera actual
-    RETURN
+        RETURN
 
     DISPLAY_5:
 	MOVF    display+5, W	; Movemos display a W
 	MOVWF	    PORTC		; Movemos Valor de tabla a PORTC
 	BCF	    PORTA, 5 	; Encendemos display 
-	BSF	bandera1, 0	; Cambiamos bandera para cambiar el otro display en la siguiente interrupción
+	BSF	bandera3, 0	; Cambiamos bandera para cambiar el otro display en la siguiente interrupción
 	BCF	bandera6, 0	; apagamos bandera actual
-    RETURN
-    
+        RETURN
+    */
 	
 	
     
- ORG 200h
-
-   
-    
-    TABLA_7SEGNEG:
-    CLRF    PCLATH		; Limpiamos registro PCLATH
-    BSF	    PCLATH, 1		; Posicionamos el PC en dirección 02xxh
-    ANDLW   0x0F		; no saltar más del tamaño de la tabla
-    ADDWF   PCL
-    RETLW   11000000B	;0
-    RETLW   11111001B	;1
-    RETLW   10100100B	;2
-    RETLW   10110000B	;3
-    RETLW   10011001B	;4
-    RETLW   10010010B	;5
-    RETLW   10000010B	;6
-    RETLW   11111000B	;7
-    RETLW   10000000B	;8
-    RETLW   10010000B	;9  
-    RETLW   01110111B	;A	; las letar no estan negadas
-    RETLW   01111100B	;b
-    RETLW   00111001B	;C
-    RETLW   01011110B	;d
-    RETLW   01111001B	;E
-    RETLW   01110001B	;F       
+ 
     
     
 PSECT code, delta=2, abs
@@ -791,12 +966,13 @@ CLRF	bandera_sep
 CLRF	bandera_oct   
 CLRF	bandera_nov   
 CLRF	bandera_dic    
-CLRF	bandera
+BSF	ESTADO,0
+BSF	EDITAR,0
 CLRF	bandera_reloj
    
 BSF u_mes,0
 BSF u_dias ,0   
-    
+ BANKSEL PORTD   
 loop:
     ;BANKSEL PORTD
     ;CALL	CHECKBOTON
@@ -806,6 +982,8 @@ loop:
    ;CALL	    SETEAR_ESTADO2
    ;CALL	    SETEAR_ESTADO3
   ; CALL	VERIFICAR_EDITAR
+   CALL	    MOSTRAR_ESTADO
+   CALL	    MOSTRAR_EDITAR
    CALL	    RELOJ  
    CALL	    SET_DISPLAYS
    CALL	    RESET_24H
@@ -820,7 +998,7 @@ loop:
 
     
 CONFIG_IO:
-    CLRF    estado
+;    CLRF    estado
     BANKSEL ANSEL
     CLRF    ANSEL
     CLRF    ANSELH		
@@ -850,10 +1028,10 @@ CONFIG_IO:
     CLRF    PORTE
 
     BANKSEL PORTD
-    BSF     PORTD, 0
+    BCF     PORTD, 0
     BCF	    PORTD, 1
     BCF	    PORTD, 2
-    BSF     PORTD, 3
+    BCF     PORTD, 3
     BCF	    PORTD, 4
     BCF	    PORTD, 5
     BCF     PORTD, 6
@@ -952,7 +1130,31 @@ CONFIG_INT:
  
 
  
+   ORG 200h
+
+   
     
+    TABLA_7SEGNEG:
+    CLRF    PCLATH		; Limpiamos registro PCLATH
+    BSF	    PCLATH, 1		; Posicionamos el PC en dirección 02xxh
+    ANDLW   0x0F		; no saltar más del tamaño de la tabla
+    ADDWF   PCL
+    RETLW   11000000B	;0
+    RETLW   11111001B	;1
+    RETLW   10100100B	;2
+    RETLW   10110000B	;3
+    RETLW   10011001B	;4
+    RETLW   10010010B	;5
+    RETLW   10000010B	;6
+    RETLW   11111000B	;7
+    RETLW   10000000B	;8
+    RETLW   10010000B	;9  
+    RETLW   01110111B	;A	; las letar no estan negadas
+    RETLW   01111100B	;b
+    RETLW   00111001B	;C
+    RETLW   01011110B	;d
+    RETLW   01111001B	;E
+    RETLW   01110001B	;F        
     
     
     
