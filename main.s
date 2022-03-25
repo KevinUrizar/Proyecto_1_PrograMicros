@@ -101,7 +101,8 @@ dias_limite: DS 1
 EDITAR: DS 1
 ESTADO:	DS 1
 LED:    DS 1    
-    
+KO:	DS 1
+PPP:	DS 1    
     
 PSECT resVect, class=CODE, abs, delta=2
 ORG 00h			    
